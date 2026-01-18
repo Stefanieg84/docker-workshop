@@ -4,6 +4,7 @@
 import pandas as pd
 from sqlalchemy import create_engine
 from tqdm.auto import tqdm
+import click
 
 dtype = {
     "VendorID": "Int64",
@@ -30,20 +31,21 @@ parse_dates = [
 ]
 
 
+@click.command()
+@click.option('--pg-user', type=str, default='root', help='PostgreSQL user')
+@click.option('--pg-pass', type=str, default='root', help='PostgreSQL password')
+@click.option('--pg-host', type=str, default='localhost', help='PostgreSQL host')
+@click.option('--pg-port', type=int, default=5432, help='PostgreSQL port')
+@click.option('--pg-db', type=str, default='ny_taxi', help='PostgreSQL database name')
+@click.option('--year', type=int, default=2021, help='Year of the data')
+@click.option('--month', type=int, default=1, help='Month of the data')
 
-def run():
-    pg_user = 'root'
-    pg_pass = 'root'
-    pg_host = 'localhost'
-    pg_port = 5432
-    pg_db = 'ny_taxi'
+@click.option('--target_table', type=str, default='yellow_taxi_data', help='Target table in PostgreSQL')
+@click.option('--chunksize', type=int, default=100000, help='Number of rows per chunk')
 
-    year = 2021
-    month = 1
 
-    target_table = 'yellow_taxi_data'
-
-    chunksize=100000
+def run(pg_user, pg_pass, pg_host, pg_port, pg_db, year, month, target_table, chunksize):
+    """Ingest yellow taxi data into PostgreSQL database."""
 
     # Read a sample of the data
     prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/'
@@ -61,7 +63,7 @@ def run():
     )
 
     first = True
-
+    print("Table created")
 
     for df_chunk in tqdm(df_iter):
         if first:
@@ -78,7 +80,8 @@ def run():
             if_exists='append'
         )
 
-        len(df_chunk)
+        print("Inserted:", len(df_chunk))
+        pass
 
 
 if __name__ == '__main__':
